@@ -22,17 +22,12 @@ type CsvLine struct {
     WineTitle string
 }
 
-func UploadStatus(w http.ResponseWriter, r *http.Request) {
-	
-	fmt.Println("Uploading the file......")
-	fmt.Fprintf(w, "Welcome to my Go File Parser - you are the status page")
-}
 
 func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to my Go File Parser - you are the home page.")
 }
 
-func uploadFile(w http.ResponseWriter, r *http.Request) {
+func UploadFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Uploading File \n")
 
 	// To parse input
