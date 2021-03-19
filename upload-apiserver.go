@@ -14,7 +14,6 @@ import (
 type ErrorMessage struct {
     ErrorStatus string `json:"errorstatus"`
 	Response string `json:"errorresponse"`
-	TimeStamp string `json:"errortimestamp"`
 }
 
 type CsvLine struct {
@@ -122,11 +121,7 @@ func ReadFile(w http.ResponseWriter, r *http.Request) {
             WineTitle: line[11],
 		}
 
-		// var allRecords []CsvLine
-		
-
-		// fmt.Println(data.Column1 + " " + data.Column2)
-		
+	
 		var jsonData []byte
 		jsonData, err := json.Marshal(data)
 		if err != nil {
@@ -139,11 +134,20 @@ func ReadFile(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// This function allows to read single item
+
+func ReadSingleItem(w http.ResponseWriter, r *http.Request){
+	
+}
+
+
 
 func handleRequests(){
 	http.HandleFunc("/", homePage)
 	http.HandleFunc("/status",uploadFile)
 	http.HandleFunc("/getwines",ReadFile)
+	http.HandleFunc("/getwines/{id}",ReadSingleItem)
+
 
 	log.Fatal(http.ListenAndServe(":8081", nil))
 }
