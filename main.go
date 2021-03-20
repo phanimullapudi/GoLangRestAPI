@@ -36,7 +36,6 @@ type WineRecord struct {
 }
 
 func ParseCsv(filename string) ([][]string, error) {
-
 	// Open CSV file
 	f, err := os.Open(filename)
 	if err != nil {
@@ -51,16 +50,6 @@ func ParseCsv(filename string) ([][]string, error) {
 	}
 
 	return lines, nil
-}
-
-func ReadAllItems(writer http.ResponseWriter,reader *http.Request) {
-	log.Info("Reading all items")
-
-	var wineRecords []*WineRecord
-	for _, line := range globalList{
-		wineRecords = append(wineRecords, line)
-	}
-	json.NewEncoder(writer).Encode(wineRecords)
 }
 
 func ReadFromCSV(fileName string) (map[int]*WineRecord, error) {
@@ -116,6 +105,16 @@ func ReadSingleItem(writer http.ResponseWriter, reader *http.Request) {
 		}
 		json.NewEncoder(writer).Encode(status)
 	}
+}
+
+func ReadAllItems(writer http.ResponseWriter,reader *http.Request) {
+	log.Info("Reading all items")
+
+	var wineRecords []*WineRecord
+	for _, line := range globalList{
+		wineRecords = append(wineRecords, line)
+	}
+	json.NewEncoder(writer).Encode(wineRecords)
 }
 
 func createNewItem(w http.ResponseWriter, r *http.Request) {
