@@ -12,9 +12,9 @@ import (
 )
 
 type StatusMessage struct {
-	Status 			string `json:"status"`
+	Status 			string `json:"status,omitempty"`
 	Msg    			string `json:"msg,omitempty"`
-	Timestamp	    string `json:"ts"`
+	Timestamp	    string `json:"ts,omitempty"`
 }
 
 type WineRecord struct {
@@ -104,7 +104,11 @@ func ReadSingleItem(writer http.ResponseWriter, reader *http.Request) {
 	if val, ok := globalList[key]; ok {
 		json.NewEncoder(writer).Encode(val)
 	}else {
-		json.NewEncoder(writer).Encode("")
+		status := StatusMessage{
+			Msg: "Value Not Found",
+			Timestamp: time.Now().Format(time.RFC3339),
+		}
+		json.NewEncoder(writer).Encode(status)
 	}
 }
 
