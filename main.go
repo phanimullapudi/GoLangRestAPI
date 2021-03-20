@@ -98,17 +98,13 @@ func ReadFromCSV(fileName string) (map[string]*WineRecord, error) {
 }
 
 // This function allows to read single item
-
-func ReadSingleItem(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
+func ReadSingleItem(writer http.ResponseWriter, reader *http.Request) {
+	vars := mux.Vars(reader)
 	key := vars["id"]
-
-	fmt.Fprintf(w, "Key: "+key)
-
-	fmt.Println("Single Item Fetch Method Called")
-	_, err := ParseCsv("static-files/file.csv")
-	if err != nil {
-		panic(err)
+	if val, ok := globalList[key]; ok {
+		json.NewEncoder(writer).Encode(val)
+	}else {
+		json.NewEncoder(writer).Encode("")
 	}
 }
 
