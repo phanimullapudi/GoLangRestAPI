@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/csv"
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -18,20 +19,20 @@ type StatusMessage struct {
 }
 
 type WineRecord struct {
-	Id                  string
-	Country             string
-	Description         string
-	Designation			string
-	points              string
-	price               string
-	province            string
-	region1             string
-	region2             string
-	tasterName          string
-	tasterTwitterHandle string
-	title               string
-	variety             string
-	winery              string
+	Id                  int    `json:"id,omitempty"`
+	Country             string `json:"country,omitempty"`
+	Description         string `json:"description,omitempty"`
+	Designation         string `json:"designation,omitempty"`
+	Points              string `json:"points,omitempty"`
+	Price               string `json:"price,omitempty"`
+	Province            string `json:"province,omitempty"`
+	Region1             string `json:"region1,omitempty"`
+	Region2             string `json:"region2,omitempty"`
+	TasterName          string `json:"taster_name,omitempty"`
+	TasterTwitterHandle string `json:"taster_twitter_handle,omitempty"`
+	Title               string `json:"title,omitempty"`
+	Variety             string `json:"variety,omitempty"`
+	Winery              string `json:"winery,omitempty"`
 }
 
 func ParseCsv(filename string) ([][]string, error) {
@@ -62,37 +63,42 @@ func ReadAllItems(writer http.ResponseWriter,reader *http.Request) {
 	json.NewEncoder(writer).Encode(wineRecords)
 }
 
-func ReadFromCSV(fileName string) (map[string]*WineRecord, error) {
+func ReadFromCSV(fileName string) (map[int]*WineRecord, error) {
 	log.Info("Starting loading csv")
 	lines, err := ParseCsv(fileName)
 	if err != nil {
 		log.Error("Failed To Parse the csv file")
 		return nil, err
 	}
-	items := make(map[string]*WineRecord)
+	items := make(map[int]*WineRecord)
 
 	// Loop through lines & turn into object
-	for index, line := range lines {
-		if index == 0 {
-			continue
+	for _, line := range lines[1:] {
+		id, err := strconv.Atoi(line[0])
+		if err != nil {
+			log.Error("Failed to parse")
 		}
+
 		data := &WineRecord{
-			Id:                  line[0],
+			Id:                  id,
 			Country:             line[1],
 			Description:         line[2],
-			Designation: 		 line[3],
-			points:              line[4],
-			price:               line[5],
-			province:            line[6],
-			region1:             line[7],
-			region2:             line[8],
-			tasterName:          line[9],
-			tasterTwitterHandle: line[10],
-			title:               line[11],
-			variety:             line[12],
-			winery:              line[13],
+			Designation:         line[3],
+			Points:              line[4],
+			Price:               line[5],
+			Province:            line[6],
+			Region1:             line[7],
+			Region2:             line[8],
+			TasterName:          line[9],
+			TasterTwitterHandle: line[10],
+			Title:               line[11],
+			Variety:             line[12],
+			Winery:              line[13],
 		}
-		items[line[0]] = data
+		items[id] = data
+		if id > latestRecordId {
+			latestRecordId = id
+		}
 	}
 	return items, nil
 }
@@ -100,7 +106,7 @@ func ReadFromCSV(fileName string) (map[string]*WineRecord, error) {
 // This function allows to read single item
 func ReadSingleItem(writer http.ResponseWriter, reader *http.Request) {
 	vars := mux.Vars(reader)
-	key := vars["id"]
+	key,_ := strconv.Atoi(vars["id"])
 	if val, ok := globalList[key]; ok {
 		json.NewEncoder(writer).Encode(val)
 	}else {
@@ -113,18 +119,24 @@ func ReadSingleItem(writer http.ResponseWriter, reader *http.Request) {
 }
 
 func createNewItem(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Create New Item Method Called")
+	log.Info("Create New Item Method Called")
 
-	var winerecord WineRecord
-	err := json.NewDecoder(r.Body).Decode(&winerecord)
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var wineRecord WineRecord
+	err := json.Unmarshal(reqBody, &wineRecord)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
-	fmt.Fprintf(w, "Winerecord: %+v", winerecord)
+	latestRecordId++
+	wineRecord.Id = latestRecordId
+	globalList[wineRecord.Id] = &wineRecord
+	json.NewEncoder(w).Encode(wineRecord)
 }
 
-var globalList = map[string]*WineRecord{}
+var globalList = map[int]*WineRecord{}
+var latestRecordId = -1
 func main() {
 	log.SetFormatter(&log.JSONFormatter{})
 
