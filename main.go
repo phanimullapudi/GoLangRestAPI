@@ -94,37 +94,45 @@ func ReadFromCSV(fileName string) (map[int]*WineRecord, error) {
 
 // This function allows to read single item
 func ReadSingleItem(writer http.ResponseWriter, reader *http.Request) {
+	log.Info("Reading single item called")
+
 	vars := mux.Vars(reader)
 	key,_ := strconv.Atoi(vars["id"])
+	
 	if val, ok := globalList[key]; ok {
 		json.NewEncoder(writer).Encode(val)
+		log.Info("Record found")
 	}else {
 		status := StatusMessage{
 			Msg: "Value Not Found",
 			Timestamp: time.Now().Format(time.RFC3339),
 		}
 		json.NewEncoder(writer).Encode(status)
+		log.Error("Record not found")
 	}
 }
 
 func ReadAllItems(writer http.ResponseWriter,reader *http.Request) {
-	log.Info("Reading all items")
+	log.Info("Reading all items called")
 
 	var wineRecords []*WineRecord
+
 	for _, line := range globalList{
 		wineRecords = append(wineRecords, line)
 	}
 	json.NewEncoder(writer).Encode(wineRecords)
 }
 
-func createNewItem(w http.ResponseWriter, r *http.Request) {
+func CreateNewItem(w http.ResponseWriter, r *http.Request) {
 	log.Info("Create New Item Method Called")
 
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var wineRecord WineRecord
 	err := json.Unmarshal(reqBody, &wineRecord)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Error("Record upload failed")
 		return
 	}
 
@@ -137,6 +145,7 @@ func createNewItem(w http.ResponseWriter, r *http.Request) {
 var globalList = map[int]*WineRecord{}
 var latestRecordId = -1
 func main() {
+
 	log.SetFormatter(&log.JSONFormatter{})
 
 	status := StatusMessage{
@@ -157,7 +166,7 @@ func main() {
 		_ = json.NewEncoder(writer).Encode(status)
 	})
 	myRouter.HandleFunc("/wines", ReadAllItems)
-	myRouter.HandleFunc("/wine", createNewItem).Methods("POST")
+	myRouter.HandleFunc("/wine", CreateNewItem).Methods("PUT")
 	myRouter.HandleFunc("/wine/{id}", ReadSingleItem)
 
 	log.Fatal(http.ListenAndServe(":8081", myRouter))
